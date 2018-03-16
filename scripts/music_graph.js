@@ -28,8 +28,26 @@ const legend = d3.legendColor()
     .classPrefix('legend');
 
 
-d3.json('top50.json', function (error, graph) {
+d3.json('mytop50.json', function (error, json) {
     if (error) throw error;
+
+    var artists  = json.items;
+    var nodes = artists.map(nodesFactory);
+    var edges = artists.map(edgesFactory);
+    var d = [];
+
+    // Deixa os edges concatenados, tira dos arrays
+    for(var i = 0; i < edges.length; i++){
+      for(var j = 0; j < edges[i].length; j++){
+        if(!d.includes(edges[i][j])){
+          d.push(edges[i][j]);
+        }
+      }
+    }
+
+    var graph = {nodes: nodes, edges: d};
+
+    console.log(d);
 
     const types = d3.set(graph.edges.map(e => e.type)).values();
     color.domain(types);
@@ -236,4 +254,25 @@ function dragended(d) {
     if (!d3.event.active) simulation.alphaTarget(0);
     d.fx = null;
     d.fy = null;
+}
+
+function nodesFactory(element, index, array){
+  return {id: element.id, name: element.name, img: element.images[2].url, url: element.external_urls.spotify, genres: element.genres};
+}
+
+function edgesFactory(element, index, array){
+  var edges = [];
+  for(var i = 0; i < array.length; i++){
+    if(array[i].id != element.id){
+      for(var j = 0; j < element.genres.length; j++){
+        for(var k = 0; k < array[i].genres.length; k++){
+          if(element.genres[j] === array[i].genres[k]){
+            var edge = {source: element.id, target: array[i].id, type: element.genres[j]};
+            edges.push(edge);
+          }
+        }
+      }
+    }
+  }
+  return edges;
 }
